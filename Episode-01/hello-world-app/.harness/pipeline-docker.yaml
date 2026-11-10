@@ -1,7 +1,7 @@
 pipeline:
   name: pipeline-docker
   identifier: pipeline_docker
-  description: Builds and runs the Hello World Maven app using the local Docker runner.
+  description: Builds and runs the Hello World Maven app on Harness Cloud.
   projectIdentifier: HarnessCICDZerotoHero
   orgIdentifier: default
   tags: {}
@@ -15,7 +15,7 @@ pipeline:
     - stage:
         name: dev
         identifier: dev
-        description: Build using Local Docker Runner
+        description: Build on Harness Cloud
         type: CI
         spec:
           cloneCodebase: true
@@ -23,7 +23,7 @@ pipeline:
             os: Linux
             arch: Amd64
           runtime:
-            type: Docker
+            type: Cloud
             spec: {}
           execution:
             steps:
@@ -35,7 +35,7 @@ pipeline:
                     shell: Sh
                     image: maven:3.9-eclipse-temurin-11
                     command: |-
-                      echo "=== Building Hello World (Docker Runner) ==="
+                      echo "=== Building Hello World (Harness Cloud) ==="
                       cd Episode-01/hello-world-app
                       mvn clean package -q
                       echo ""
