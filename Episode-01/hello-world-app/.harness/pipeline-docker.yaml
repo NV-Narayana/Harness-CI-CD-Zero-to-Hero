@@ -1,13 +1,14 @@
 pipeline:
   name: pipeline-docker
   identifier: pipeline_docker
+  description: Builds and runs the Hello World Maven app using the local Docker runner.
   projectIdentifier: HarnessCICDZerotoHero
   orgIdentifier: default
   tags: {}
   properties:
     ci:
       codebase:
-        connectorRef: Github
+        connectorRef: org.gitconnector
         repoName: Harness-CI-CD-Zero-to-Hero
         build: <+input>
   stages:
