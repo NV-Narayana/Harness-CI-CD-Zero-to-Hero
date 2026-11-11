@@ -1,6 +1,7 @@
 pipeline:
   name: python-docker-pipeline
   identifier: python_docker_pipeline
+  description: Build, test, and push a Python app image to Docker Hub
   projectIdentifier: HarnessCICDZerotoHero
   orgIdentifier: default
   tags: {}
@@ -65,7 +66,7 @@ pipeline:
                   name: Build and Push to Docker Hub
                   identifier: build_push_docker
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     repo: <+variable.docker_username>/python-harness-app
                     tags:
                       - <+pipeline.sequenceId>
