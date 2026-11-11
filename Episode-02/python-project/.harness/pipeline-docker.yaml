@@ -1,3 +1,18 @@
+# ============================================
+# PIPELINE: Python App - Harness Cloud + Push to Docker Hub
+# ============================================
+# CHANGE THESE 4 VALUES:
+#   1. projectIdentifier → Your project ID (from URL)
+#   2. orgIdentifier → Your org name (usually "default")
+#   3. connectorRef (codebase) → Your GitHub connector
+#   4. connectorRef (docker) → Your Docker Hub connector
+#
+# PREREQUISITES:
+#   - Harness Cloud enabled (credit card verification, no charge)
+#   - Docker Hub connector created in Harness (account.dockerhub)
+#   - Secret "docker-hub-password" in Harness
+#   - Variable "docker_username" in Harness
+# ===========================================
 pipeline:
   name: python-docker-pipeline
   identifier: python_docker_pipeline
