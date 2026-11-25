@@ -21,7 +21,8 @@ pipeline:
       value: us-east-1
     - name: s3_bucket_name
       type: String
-      description: S3 bucket holding Terraform state
+      description: S3 bucket holding Terraform state (required, must not be empty)
+      required: true
       value: <+input>
   stages:
     - stage:
@@ -49,11 +50,16 @@ pipeline:
                       AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
                       AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
                       AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
+                      TF_STATE_BUCKET: <+pipeline.variables.s3_bucket_name>
                     command: |-
                       echo "=== Terraform Init ==="
+                      if [ -z "$(echo "$TF_STATE_BUCKET" | tr -d '[:space:]')" ]; then
+                        echo "ERROR: pipeline variable s3_bucket_name is empty. Provide the S3 bucket that stores Terraform state."
+                        exit 1
+                      fi
                       cd Episode-03/terraform-project
                       terraform init \
-                        -backend-config="bucket=<+pipeline.variables.s3_bucket_name>" \
+                        -backend-config="bucket=$TF_STATE_BUCKET" \
                         -backend-config="key=harness-demo/terraform.tfstate" \
                         -backend-config="region=<+pipeline.variables.aws_region>"
                       echo "=== Init Done! ==="
