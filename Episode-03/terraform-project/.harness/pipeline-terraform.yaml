@@ -15,6 +15,14 @@ pipeline:
       type: String
       description: "Choose: apply or destroy"
       value: <+input>.allowedValues(apply,destroy)
+    - name: aws_region
+      type: String
+      description: AWS region
+      value: us-east-1
+    - name: s3_bucket_name
+      type: String
+      description: S3 bucket holding Terraform state
+      value: <+input>
   stages:
     - stage:
         name: terraform
@@ -40,14 +48,14 @@ pipeline:
                     envVariables:
                       AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
                       AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
-                      AWS_DEFAULT_REGION: <+variable.aws_region>
+                      AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                     command: |-
                       echo "=== Terraform Init ==="
                       cd Episode-03/terraform-project
                       terraform init \
-                        -backend-config="bucket=<+variable.s3_bucket_name>" \
+                        -backend-config="bucket=<+pipeline.variables.s3_bucket_name>" \
                         -backend-config="key=harness-demo/terraform.tfstate" \
-                        -backend-config="region=<+variable.aws_region>"
+                        -backend-config="region=<+pipeline.variables.aws_region>"
                       echo "=== Init Done! ==="
               - step:
                   type: Run
@@ -58,7 +66,7 @@ pipeline:
                     envVariables:
                       AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
                       AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
-                      AWS_DEFAULT_REGION: <+variable.aws_region>
+                      AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                     command: |-
                       echo "=== Terraform Plan (action: <+pipeline.variables.tf_action>) ==="
                       cd Episode-03/terraform-project
@@ -77,7 +85,7 @@ pipeline:
                     envVariables:
                       AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
                       AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
-                      AWS_DEFAULT_REGION: <+variable.aws_region>
+                      AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                     command: |-
                       echo "=== Terraform <+pipeline.variables.tf_action> ==="
                       cd Episode-03/terraform-project
