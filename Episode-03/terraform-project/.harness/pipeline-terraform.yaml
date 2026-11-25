@@ -7,7 +7,7 @@ pipeline:
   properties:
     ci:
       codebase:
-        connectorRef: org.gitconnector
+        connectorRef: account.Github_account
         repoName: Harness-CI-CD-Zero-to-Hero
         build: <+input>
   variables:
@@ -21,9 +21,9 @@ pipeline:
       value: us-east-1
     - name: s3_bucket_name
       type: String
-      description: S3 bucket holding Terraform state (required, must not be empty)
+      description: S3 bucket holding Terraform state
       required: true
-      value: <+input>
+      value: terraform-harness-delegates
   stages:
     - stage:
         name: terraform
@@ -47,8 +47,8 @@ pipeline:
                   spec:
                     shell: Sh
                     envVariables:
-                      AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
-                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("account.aws_access_key_id")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("account.aws_secret_access_key")>
                       AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                       TF_STATE_BUCKET: <+pipeline.variables.s3_bucket_name>
                     command: |-
@@ -57,7 +57,7 @@ pipeline:
                         echo "ERROR: pipeline variable s3_bucket_name is empty. Provide the S3 bucket that stores Terraform state."
                         exit 1
                       fi
-                      # Strip stray whitespace/newlines from credentials (a malformed value crashes the AWS SDK request logger)
+                      # Strip stray whitespace/newlines from credentials
                       AWS_ACCESS_KEY_ID="$(printf '%s' "$AWS_ACCESS_KEY_ID" | tr -d '[:space:]')"
                       AWS_SECRET_ACCESS_KEY="$(printf '%s' "$AWS_SECRET_ACCESS_KEY" | tr -d '[:space:]')"
                       TF_STATE_BUCKET="$(printf '%s' "$TF_STATE_BUCKET" | tr -d '[:space:]')"
@@ -65,14 +65,20 @@ pipeline:
                         echo "ERROR: AWS credentials are empty. Check secrets aws_access_key_id and aws_secret_access_key."
                         exit 1
                       fi
+                      # Sanity checks (lengths/prefix only, never print the values)
+                      echo "Access key id length: ${#AWS_ACCESS_KEY_ID}, prefix: $(printf '%s' "$AWS_ACCESS_KEY_ID" | cut -c1-4)"
+                      echo "Secret key length: ${#AWS_SECRET_ACCESS_KEY}"
+                      case "$AWS_ACCESS_KEY_ID" in
+                        AKIA*|ASIA*) ;;
+                        *) echo "ERROR: AWS_ACCESS_KEY_ID does not look like an access key id (expected AKIA.../ASIA...). Check the aws_access_key_id secret value."; exit 1 ;;
+                      esac
                       export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
                       unset TF_LOG TF_LOG_CORE TF_LOG_PROVIDER
                       cd Episode-03/terraform-project
                       terraform init \
                         -backend-config="bucket=$TF_STATE_BUCKET" \
                         -backend-config="key=harness-demo/terraform.tfstate" \
-                        -backend-config="region=<+pipeline.variables.aws_region>" \
-                        -backend-config="skip_requesting_account_id=true"
+                        -backend-config="region=<+pipeline.variables.aws_region>"
                       echo "=== Init Done! ==="
               - step:
                   type: Run
@@ -81,8 +87,8 @@ pipeline:
                   spec:
                     shell: Sh
                     envVariables:
-                      AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
-                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("account.aws_access_key_id")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("account.aws_secret_access_key")>
                       AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                     command: |-
                       echo "=== Terraform Plan (action: <+pipeline.variables.tf_action>) ==="
@@ -100,8 +106,8 @@ pipeline:
                   spec:
                     shell: Sh
                     envVariables:
-                      AWS_ACCESS_KEY_ID: <+secrets.getValue("aws_access_key_id")>
-                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("aws_secret_access_key")>
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("account.aws_access_key_id")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("account.aws_secret_access_key")>
                       AWS_DEFAULT_REGION: <+pipeline.variables.aws_region>
                     command: |-
                       echo "=== Terraform <+pipeline.variables.tf_action> ==="
